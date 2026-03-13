@@ -22,6 +22,7 @@ __global__ void histogramKernel(unsigned int *deviceInput, int inputLength,
 
   if (i < inputLength) {
     auto idx = deviceInput[i];
+    if (idx >= numBins) return;
     if (deviceBins[idx] < 127) {
       auto previous = atomicAdd(&deviceBins[idx], 1);
       if (previous >= 127) {
@@ -53,7 +54,7 @@ int main(int argc, char *argv[]) {
 
   wbTime_start(Generic, "Importing data and creating memory on host");
   hostInput =
-      (unsigned int *)wbImport(wbArg_getInputFile(args, 0), &inputLength);
+      (unsigned int *)wbImport(wbArg_getInputFile(args, 0), &inputLength, "Integers");
   hostBins = (unsigned int *)malloc(NUM_BINS * sizeof(unsigned int));
   wbTime_stop(Generic, "Importing data and creating memory on host");
 

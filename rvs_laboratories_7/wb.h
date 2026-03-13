@@ -458,6 +458,53 @@ float* wbImport(const char* fName, int* numElements)
     return fBuf;
 }
 
+unsigned int* wbImport(const char* fName, int* numElements, const char*)
+{
+    std::ifstream inFile(fName);
+
+    if (!inFile.is_open())
+    {
+        std::cerr << "Error opening input file " << fName << ". " << wbInternal::wbStrerror(errno) << std::endl;
+        std::exit(EXIT_FAILURE);
+    }
+
+    inFile >> *numElements;
+
+    std::string sVal;
+    std::vector<unsigned int> fVec;
+
+    fVec.reserve(*numElements);
+
+    while (inFile >> sVal)
+    {
+        std::istringstream iss(sVal);
+        unsigned int fVal;
+        iss >> fVal;
+        fVec.push_back(fVal);
+    }
+
+    inFile.close();
+
+    if (*numElements != static_cast<int>(fVec.size()))
+    {
+        std::cerr << "Error reading contents of file " << fName << ". Expecting " << *numElements << " elements but got " << fVec.size() << std::endl;
+        std::exit(EXIT_FAILURE);
+    }
+
+    unsigned int* fBuf = (unsigned int*)malloc(*numElements * sizeof(unsigned int));
+
+    if (!fBuf)
+    {
+        std::cerr << "Unable to allocate memory for an array of size " << *numElements * sizeof(unsigned int) << " bytes" << std::endl;
+        inFile.close();
+        std::exit(EXIT_FAILURE);
+    }
+
+    std::copy(fVec.begin(), fVec.end(), fBuf);
+
+    return fBuf;
+}
+
 namespace wbInternal
 {
     // For assignment MP6
