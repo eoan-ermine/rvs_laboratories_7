@@ -16,16 +16,16 @@ inline void gpuAssert(cudaError_t code, const char *file, int line,
   }
 }
 
-__global__ void histogramKernel(unsigned int *input, int inputLength,
-                                unsigned int *bins, int numBins) {
-  int idx = blockIdx.x * blockDim.x + threadIdx.x;
+__global__ void histogramKernel(unsigned int *deviceInput, int inputLength,
+                                unsigned int *deivceBins, int numBins) {
+  int i = blockIdx.x * blockDim.x + threadIdx.x;
 
-  if (idx < inputLength) {
-    unsigned int value = input[idx];
-    if (value < numBins) {
-      unsigned int old = atomicAdd(&bins[value], 1);
-      if (old >= 127) {
-        atomicMin(&bins[value], 127u);
+  if (i < inputLength) {
+    unsigned int idx = deviceInput[i];
+    if (deivceBins[idx] < 127) {
+      unsigned int previous = atomicAdd(&deivceBins[idx], 1);
+      if (previous >= 127) {
+        atomicMin(&deivceBins[idx], 127u);
       }
     }
   }
