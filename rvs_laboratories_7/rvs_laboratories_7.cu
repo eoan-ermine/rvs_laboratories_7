@@ -31,6 +31,16 @@ __global__ void histogramKernel(unsigned int *deviceInput, int inputLength,
   }
 }
 
+static void writeData(char *filename, unsigned int *data, int num) {
+  FILE *handle = fopen(filename, "w");
+  fprintf(handle, "%d", num);
+  for (int ii = 0; ii < num; ii++) {
+    fprintf(handle, "\n%d", *data++);
+  }
+  fflush(handle);
+  fclose(handle);
+}
+
 int main(int argc, char *argv[]) {
   wbArg_t args;
   int inputLength;
@@ -91,6 +101,9 @@ int main(int argc, char *argv[]) {
   CUDA_CHECK(cudaFree(deviceInput));
   CUDA_CHECK(cudaFree(deviceBins));
   wbTime_stop(GPU, "Freeing GPU Memory");
+
+  // Тестовое сохранение результатов
+  writeData("solution.raw", hostBins, NUM_BINS);
 
   // Проверка корректности результатов
   // -----------------------------------------------------
