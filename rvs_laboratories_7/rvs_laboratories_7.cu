@@ -17,15 +17,15 @@ inline void gpuAssert(cudaError_t code, const char *file, int line,
 }
 
 __global__ void histogramKernel(unsigned int *deviceInput, int inputLength,
-                                unsigned int *deivceBins, int numBins) {
+                                unsigned int *deviceBins, int numBins) {
   int i = blockIdx.x * blockDim.x + threadIdx.x;
 
   if (i < inputLength) {
-    unsigned int idx = deviceInput[i];
-    if (deivceBins[idx] < 127) {
-      unsigned int previous = atomicAdd(&deivceBins[idx], 1);
+    auto idx = deviceInput[i];
+    if (deviceBins[idx] < 127) {
+      auto previous = atomicAdd(&deviceBins[idx], 1);
       if (previous >= 127) {
-        atomicMin(&deivceBins[idx], 127u);
+        atomicMin(&deviceBins[idx], 127u);
       }
     }
   }
@@ -63,7 +63,9 @@ int main(int argc, char *argv[]) {
   wbTime_start(GPU, "Allocating GPU memory.");
   //@@ Выделите память GPU
   CUDA_CHECK(cudaMalloc(&deviceInput, inputLength * sizeof(unsigned int)));
+  CUDA_CHECK(cudaGetLastError());
   CUDA_CHECK(cudaMalloc(&deviceBins, NUM_BINS * sizeof(unsigned int)));
+  CUDA_CHECK(cudaGetLastError());
   CUDA_CHECK(cudaDeviceSynchronize());
   wbTime_stop(GPU, "Allocating GPU memory.");
 
@@ -72,7 +74,9 @@ int main(int argc, char *argv[]) {
   CUDA_CHECK(cudaMemcpy(deviceInput, hostInput,
                         inputLength * sizeof(unsigned int),
                         cudaMemcpyHostToDevice));
+  CUDA_CHECK(cudaGetLastError());
   CUDA_CHECK(cudaMemset(deviceBins, 0, NUM_BINS * sizeof(unsigned int)));
+  CUDA_CHECK(cudaGetLastError());
   CUDA_CHECK(cudaDeviceSynchronize());
   wbTime_stop(GPU, "Copying input memory to the GPU.");
 
@@ -94,6 +98,7 @@ int main(int argc, char *argv[]) {
   wbTime_start(Copy, "Copying output memory to the CPU");
   CUDA_CHECK(cudaMemcpy(hostBins, deviceBins, NUM_BINS * sizeof(unsigned int),
                         cudaMemcpyDeviceToHost));
+  CUDA_CHECK(cudaGetLastError());
   CUDA_CHECK(cudaDeviceSynchronize());
   wbTime_stop(Copy, "Copying output memory to the CPU");
 
